@@ -30,7 +30,7 @@ object KafkaTimeseries {
           mo.message.payload.get(payloadBytes)
           System.out.println("key: " + new String(keyBytes, StandardCharsets.UTF_8) + 
             " payload: " + new String(payloadBytes, StandardCharsets.UTF_8))
-          Math.max(o, mo.offset)
+          Math.max(o, mo.nextOffset)
       }
       System.out.println("next offset " + nextOffset)
     } catch {
