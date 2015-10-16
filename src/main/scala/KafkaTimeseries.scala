@@ -13,7 +13,7 @@ object KafkaTimeseries {
     val topic = args(0)
     val partition = Integer.parseInt(args(1))
     val topicAndPartition = new TopicAndPartition(topic, partition)
-    val name = "client-" + topicAndPartition
+    val name = "client-" + topic + "-" + partition
     val consumer = new SimpleConsumer("localhost", 9092, 5000, BlockingChannel.UseDefaultBufferSize, name)
     try {
       val offsetRequest = new OffsetRequest(Map(topicAndPartition -> 
