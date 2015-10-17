@@ -26,16 +26,17 @@ object KafkaTimeseries {
         (o:Long, mo:MessageAndOffset) =>
           val keyBytes = new Array[Byte](mo.message.keySize)
           mo.message.key.get(keyBytes)
+          val key = new String(keyBytes, StandardCharsets.US_ASCII)
           val payloadBytes = new Array[Byte](mo.message.payloadSize)
           mo.message.payload.get(payloadBytes)
-          System.out.println("key: " + new String(keyBytes, StandardCharsets.UTF_8) + 
-            " payload: " + new String(payloadBytes, StandardCharsets.UTF_8))
+          val payload = new String(payloadBytes, StandardCharsets.US_ASCII)
+          System.out.println("key: " + key + " payload: " + payload)
           Math.max(o, mo.nextOffset)
       }
       System.out.println("next offset " + nextOffset)
     } catch {
       case NonFatal(e) => 
-        System.out.println("oops: " + e)
+        System.err.println("oops: " + e)
         e.printStackTrace()
     } finally {
       consumer.close()
