@@ -25,6 +25,7 @@ object KafkaTimeseries {
     val topic = args(0)
     val partition = Integer.parseInt(args(1))
     val offset = args(2).toLong
+    val fetchSize = args(3).toInt
     val topicAndPartition = new TopicAndPartition(topic, partition)
     val name = s"client-$topic-$partition"
     val consumer = new SimpleConsumer("localhost", 9092, 5000, BlockingChannel.UseDefaultBufferSize, name)
@@ -36,11 +37,11 @@ object KafkaTimeseries {
       .named("GraphiteLine")
     GroupWriteSupport.setSchema(schema, configuration)
     val gf = new SimpleGroupFactory(schema)
-    val outFile = new Path("/tmp/graphite-parquet")
+    val outFile = new Path("/tmp/graphite-parquet-narrow")
     val writer = new ParquetWriter[Group](outFile, new GroupWriteSupport, UNCOMPRESSED, DEFAULT_BLOCK_SIZE, 
       DEFAULT_PAGE_SIZE, 512, true, false, PARQUET_2_0, configuration)
     try {
-      val fetchRequest = new FetchRequestBuilder().clientId(name).addFetch(topic, partition, offset, 8096).build()
+      val fetchRequest = new FetchRequestBuilder().clientId(name).addFetch(topic, partition, offset, fetchSize).build()
       val fetchResponse = consumer.fetch(fetchRequest)
       if (fetchResponse.hasError) {
         throw new Exception("fetch request error code" + fetchResponse.errorCode(topic, partition))
