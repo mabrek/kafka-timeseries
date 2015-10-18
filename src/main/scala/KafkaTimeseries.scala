@@ -57,7 +57,10 @@ object KafkaTimeseries {
             val split = payload.trim.split("\\s+")
             val value = split(0).toDouble
             val timestamp = split(1).toLong
-            writer.write(gf.newGroup().append("metric", key).append("value", value).append("timestamp", timestamp))
+            writer.write(gf.newGroup()
+              .append("metric", key)
+              .append("value", value)
+              .append("timestamp", timestamp))
           } catch {
             case e:NumberFormatException =>
               System.err.println(s"number format error $e in key: $key payload: $payload")
