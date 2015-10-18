@@ -32,18 +32,18 @@ object KafkaTimeseries {
       
       val name = s"client-$topic-$partition"
       val consumer = new SimpleConsumer("localhost", 9092, 5000, BlockingChannel.UseDefaultBufferSize, name)
-      
-      val (nextOffset, timestamps, types, columns) = try {
+      val timestamps = mutable.SortedSet[Long]()
+      val types = mutable.Set[Type]()
+      val columns = mutable.Map[String, mutable.Map[Long, Double]]()
+      val nextOffset = try {
         val fetchRequest = new FetchRequestBuilder().clientId(name)
           .addFetch(topic, partition, offset, fetchSize).build()
         val fetchResponse = consumer.fetch(fetchRequest)
         if (fetchResponse.hasError) {
           throw new Exception("fetch request error code" + fetchResponse.errorCode(topic, partition))
         }
-        
         fetchResponse.messageSet(topic, partition)
-          .foldLeft(offset, mutable.SortedSet[Long](), mutable.Set[Type](), 
-                    mutable.Map[String, mutable.Map[Long, Double]]()) {
+          .foldLeft(offset) {
             case ((maxOffset, timestampAcc, typesAcc, columnsAcc), messageAndOffset) =>
               val keyBytes = new Array[Byte](messageAndOffset.message.keySize)
               messageAndOffset.message.key.get(keyBytes)
@@ -55,14 +55,14 @@ object KafkaTimeseries {
                 val split = payload.trim.split("\\s+")
                 val value = split(0).toDouble
                 val timestamp = split(1).toLong
-                timestampAcc += timestamp
-                typesAcc += Types.optional(DOUBLE).named(key)
-                columnsAcc.getOrElseUpdate(key, mutable.Map[Long, Double]()).update(timestamp, value)
+                timestamps += timestamp
+                types += Types.optional(DOUBLE).named(key)
+                columns.getOrElseUpdate(key, mutable.Map[Long, Double]()).update(timestamp, value)
               } catch {
                 case e: NumberFormatException =>
                   System.err.println(s"number format error $e in key: $key payload: $payload")
               }
-              (Math.max(maxOffset, messageAndOffset.nextOffset), timestampAcc, typesAcc, columnsAcc)
+              Math.max(maxOffset, messageAndOffset.nextOffset)
         }
       } finally {
         consumer.close()
