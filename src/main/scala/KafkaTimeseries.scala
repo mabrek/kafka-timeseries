@@ -26,7 +26,7 @@ object KafkaTimeseries {
   def main(args: Array[String]) {
     try {
       val topic = args(0)
-      val partition = Integer.parseInt(args(1))
+      val partition = args(1).toInt
       val offset = args(2).toLong
       val fetchSize = args(3).toInt
       
