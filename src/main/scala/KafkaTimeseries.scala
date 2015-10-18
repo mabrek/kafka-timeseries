@@ -1,6 +1,6 @@
 import java.nio.charset.StandardCharsets
 
-import kafka.api.{FetchRequestBuilder, OffsetRequest, PartitionOffsetRequestInfo}
+import kafka.api.FetchRequestBuilder
 import kafka.common.TopicAndPartition
 import kafka.consumer.SimpleConsumer
 import kafka.message.MessageAndOffset
@@ -13,10 +13,10 @@ import org.apache.parquet.example.data.simple.SimpleGroupFactory
 import org.apache.parquet.hadoop.ParquetWriter
 import org.apache.parquet.hadoop.ParquetWriter._
 import org.apache.parquet.hadoop.example.GroupWriteSupport
-import org.apache.parquet.schema.{Types, MessageType}
-import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName._
-import org.apache.parquet.schema.OriginalType._
 import org.apache.parquet.hadoop.metadata.CompressionCodecName._
+import org.apache.parquet.schema.OriginalType._
+import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName._
+import org.apache.parquet.schema.Types
 
 import scala.util.control.NonFatal
 
