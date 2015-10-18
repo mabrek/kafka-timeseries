@@ -26,7 +26,7 @@ object KafkaTimeseries {
     val partition = Integer.parseInt(args(1))
     val offset = args(2).toLong
     val topicAndPartition = new TopicAndPartition(topic, partition)
-    val name = "client-" + topic + "-" + partition
+    val name = s"client-$topic-$partition"
     val consumer = new SimpleConsumer("localhost", 9092, 5000, BlockingChannel.UseDefaultBufferSize, name)
     val configuration = new Configuration
     val schema = Types.buildMessage()
