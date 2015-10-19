@@ -75,7 +75,7 @@ object KafkaTimeseries {
       GroupWriteSupport.setSchema(schema, configuration)
       val gf = new SimpleGroupFactory(schema)
       val outFile = new Path(targetFolder, s"$topic-$partition-$offset-$nextOffset.parquet")
-      val writer = new ParquetWriter[Group](outFile, new GroupWriteSupport, UNCOMPRESSED, DEFAULT_BLOCK_SIZE,
+      val writer = new ParquetWriter[Group](outFile, new GroupWriteSupport, GZIP, DEFAULT_BLOCK_SIZE,
         DEFAULT_PAGE_SIZE, 512, true, false, PARQUET_2_0, configuration)
       try {
         for (timestamp <- timestamps) {
