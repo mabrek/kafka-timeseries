@@ -1,9 +1,7 @@
 import java.nio.charset.StandardCharsets
 
 import kafka.api.FetchRequestBuilder
-import kafka.common.TopicAndPartition
 import kafka.consumer.SimpleConsumer
-import kafka.message.MessageAndOffset
 import kafka.network.BlockingChannel
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -14,11 +12,10 @@ import org.apache.parquet.hadoop.ParquetWriter
 import org.apache.parquet.hadoop.ParquetWriter._
 import org.apache.parquet.hadoop.example.GroupWriteSupport
 import org.apache.parquet.hadoop.metadata.CompressionCodecName._
-import org.apache.parquet.schema.OriginalType._
 import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName._
-import org.apache.parquet.schema.Types
-import org.apache.parquet.schema.Type
+import org.apache.parquet.schema.{MessageType, Type, Types}
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.util.control.NonFatal
 
@@ -44,7 +41,7 @@ object KafkaTimeseries {
         }
         fetchResponse.messageSet(topic, partition)
           .foldLeft(offset) {
-            case ((maxOffset, timestampAcc, typesAcc, columnsAcc), messageAndOffset) =>
+            case (maxOffset, messageAndOffset) =>
               val keyBytes = new Array[Byte](messageAndOffset.message.keySize)
               messageAndOffset.message.key.get(keyBytes)
               val key = new String(keyBytes, StandardCharsets.US_ASCII)
@@ -69,26 +66,26 @@ object KafkaTimeseries {
       }
       
       val configuration = new Configuration
-      val schema = Types.buildMessage()
-        .required(BINARY).as(UTF8).named("metric")
-        .required(DOUBLE).named("value")
-        .required(INT64).named("timestamp")
-        .named("GraphiteLine")
+      val schema = new MessageType("GraphiteLine", (types + Types.required(INT64).named("timestamp")).toList) 
       GroupWriteSupport.setSchema(schema, configuration)
       val gf = new SimpleGroupFactory(schema)
       val outFile = new Path("/tmp/graphite-parquet-wide")
       val writer = new ParquetWriter[Group](outFile, new GroupWriteSupport, UNCOMPRESSED, DEFAULT_BLOCK_SIZE,
         DEFAULT_PAGE_SIZE, 512, true, false, PARQUET_2_0, configuration)
       try {
-      writer.write(gf.newGroup()
-        .append("metric", key)
-        .append("value", value)
-        .append("timestamp", timestamp))
+        for (timestamp <- timestamps) {
+          val group = gf.newGroup().append("timestamp", timestamp)
+          for ((metric, column) <- columns) {
+            column.get(timestamp).foreach(group.append(metric, _))
+          }
+          writer.write(group)
+        }
       } finally {
         writer.close()
       }
       
       System.out.println("next offset " + nextOffset)
+      
     } catch {
       case NonFatal(e) => 
         System.err.println("oops: " + e)
