@@ -22,10 +22,15 @@ import scala.util.control.NonFatal
 object KafkaTimeseries {
   def main(args: Array[String]) {
     try {
+      if (args.size != 5) {
+        System.err.println("required parameters: topic partition offset fetchSize targetFolder")
+        System.exit(-1)
+      }
       val topic = args(0)
       val partition = args(1).toInt
       val offset = args(2).toLong
       val fetchSize = args(3).toInt
+      val targetFolder = args(4)
       
       val name = s"client-$topic-$partition"
       val consumer = new SimpleConsumer("localhost", 9092, 5000, BlockingChannel.UseDefaultBufferSize, name)
@@ -69,7 +74,7 @@ object KafkaTimeseries {
       val schema = new MessageType("GraphiteLine", (types + Types.required(INT64).named("timestamp")).toList) 
       GroupWriteSupport.setSchema(schema, configuration)
       val gf = new SimpleGroupFactory(schema)
-      val outFile = new Path("/tmp/graphite-parquet-wide")
+      val outFile = new Path(targetFolder, s"$topic-$partition-$offset-$nextOffset.parquet")
       val writer = new ParquetWriter[Group](outFile, new GroupWriteSupport, UNCOMPRESSED, DEFAULT_BLOCK_SIZE,
         DEFAULT_PAGE_SIZE, 512, true, false, PARQUET_2_0, configuration)
       try {
@@ -83,8 +88,6 @@ object KafkaTimeseries {
       } finally {
         writer.close()
       }
-      
-      System.out.println("next offset " + nextOffset)
       
     } catch {
       case NonFatal(e) => 
