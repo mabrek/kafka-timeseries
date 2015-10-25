@@ -28,8 +28,8 @@ Where:
 *  topic - topic name which contains messages with `metric_name` as key and `value timestamp` payload from graphite plaintext protocol
 *  partition - partition number
 *  offset - number of messages to skip from the beginning
-*  fetchSize - maximum size of data to fetch from kafka
-*  targetFolder - where to place Parquet files
+*  fetchSize - (bytes) maximum size of data to fetch from kafka
+*  targetFolder - path where to save Parquet files
 *  jvmMemorySize - maximum memory for JVM (-Xmx argument), must be at least 3 times larger than fetchSize.
 
 Parquet files will have name `$topic-$partition-$offset-$nextOffset.parquet` under `targetFolder`
